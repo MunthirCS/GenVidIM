@@ -6,26 +6,24 @@ RUN apt-get update && apt-get install -y \
     wget \
     curl \
     ffmpeg \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
-WORKDIR /workspace
+WORKDIR /workspace/GenVidIM
 
-# Clone Wan2.2 repository
-RUN git clone https://github.com/Wan-xiaohui/Wan2.2.git /workspace/Wan2.2
+# Copy entire GenVidIM repository
+COPY . /workspace/GenVidIM/
 
-# Install Wan2.2 requirements
-WORKDIR /workspace/Wan2.2
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install RunPod SDK
 RUN pip install --no-cache-dir runpod
 
-# Copy handler from your repo
-COPY serverless/handler.py /workspace/handler.py
-
-# Set working directory back to workspace
-WORKDIR /workspace
+# Create output directory
+RUN mkdir -p /workspace/GenVidIM/outputs
 
 # Start the handler
-CMD ["python", "-u", "handler.py"]
+CMD ["python", "-u", "serverless/handler.py"]

@@ -42,7 +42,6 @@ def generate_video(job):
         'python', 'generate.py',
         '--task', task,
         '--size', size,
-        '--ckpt_dir', './Wan2.2-TI2V-5B',
         '--sample_steps', str(steps),
         '--prompt', prompt,
         '--offload_model', 'True',
@@ -54,7 +53,7 @@ def generate_video(job):
     try:
         result = subprocess.run(
             cmd,
-            cwd='/workspace/Wan2.2',
+            cwd='/workspace/GenVidIM',
             capture_output=True,
             text=True,
             timeout=1200  # 20 minutes
@@ -67,8 +66,8 @@ def generate_video(job):
                 "stdout": result.stdout
             }
 
-        # Find generated video
-        video_files = list(Path('/workspace/Wan2.2').glob('*.mp4'))
+        # Find generated video in outputs directory
+        video_files = list(Path('/workspace/GenVidIM/outputs').glob('*.mp4'))
         if not video_files:
             return {
                 "error": "No video file generated",
