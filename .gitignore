@@ -1,7 +1,32 @@
+# Environment & Config
+.runpod.env
+*.env
+
+# Model weights
+Wan2.2-TI2V-5B/
+*.pth
+*.safetensors
+*.ckpt
+
+# Generated videos
+videos/
+colab_videos/
+*.mp4
+*.avi
+
+# IDE
+.idx/
+.vscode/
 __pycache__/
+*.pyc
+
+# Archives
+.archive/
+
+# Temporary
+*.log
+nohup.out
+
+# OS
 .DS_Store
-.vscode*
-tmp_examples*
-new_checkpoint*
-batch_test*
-nohup*
+Thumbs.db
