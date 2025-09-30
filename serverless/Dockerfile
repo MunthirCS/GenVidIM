@@ -5,37 +5,26 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     curl \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
-RUN pip install --no-cache-dir \
-    runpod \
-    diffusers \
-    transformers \
-    accelerate \
-    torch \
-    torchvision \
-    opencv-python \
-    imageio \
-    imageio-ffmpeg
 
 # Set working directory
 WORKDIR /workspace
 
-# Copy the entire repository (when building from GitHub)
-# RunPod will clone the repo automatically, so files are already present
-COPY . /workspace/
+# Clone Wan2.2 repository
+RUN git clone https://github.com/Wan-xiaohui/Wan2.2.git /workspace/Wan2.2
 
-# Install additional Wan2.2 requirements if needed
-RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
+# Install Wan2.2 requirements
+WORKDIR /workspace/Wan2.2
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy serverless handler to root
+# Install RunPod SDK
+RUN pip install --no-cache-dir runpod
+
+# Copy handler from your repo
 COPY serverless/handler.py /workspace/handler.py
 
-# Download model on first run (optional - uncomment to pre-download)
-# RUN huggingface-cli download Wan-AI/Wan2.2-TI2V-5B --local-dir ./Wan2.2-TI2V-5B
-
-# Set working directory
+# Set working directory back to workspace
 WORKDIR /workspace
 
 # Start the handler
