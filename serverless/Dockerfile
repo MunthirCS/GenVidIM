@@ -8,7 +8,6 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     libgl1-mesa-glx \
     libglib2.0-0 \
-    ninja-build \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -17,9 +16,15 @@ WORKDIR /workspace/GenVidIM
 # Copy entire GenVidIM repository
 COPY . /workspace/GenVidIM/
 
-# Install Python dependencies (skip flash_attn if it fails)
-RUN pip install --no-cache-dir torch>=2.4.0 torchvision>=0.19.0 torchaudio && \
+# Create requirements without flash_attn (it's optional and causes build failures)
+RUN grep -v "flash_attn" requirements.txt > requirements_minimal.txt || true
+
+# Install Python dependencies (without flash_attn)
+RUN pip install --no-cache-dir -r requirements_minimal.txt || \
     pip install --no-cache-dir \
+    torch>=2.4.0 \
+    torchvision>=0.19.0 \
+    torchaudio \
     opencv-python>=4.9.0.80 \
     diffusers>=0.31.0 \
     transformers>=4.49.0 \
@@ -31,8 +36,7 @@ RUN pip install --no-cache-dir torch>=2.4.0 torchvision>=0.19.0 torchaudio && \
     ftfy \
     dashscope \
     imageio-ffmpeg \
-    "numpy>=1.23.5,<2" && \
-    pip install --no-cache-dir flash-attn --no-build-isolation || echo "flash-attn install failed, continuing without it"
+    "numpy>=1.23.5,<2"
 
 # Install RunPod SDK
 RUN pip install --no-cache-dir runpod
