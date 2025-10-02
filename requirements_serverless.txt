@@ -1,0 +1,44 @@
+# Core PyTorch
+torch>=2.4.0
+torchvision>=0.19.0
+torchaudio
+
+# Image/Video Processing
+opencv-python>=4.9.0.80
+Pillow
+imageio[ffmpeg]
+imageio-ffmpeg
+decord
+av
+
+# AI/ML Libraries
+diffusers>=0.31.0
+transformers>=4.49.0,<=4.51.3
+tokenizers>=0.20.3
+accelerate>=1.1.1
+safetensors
+
+# Math/Array Operations
+numpy>=1.23.5,<2
+einops
+
+# Text Processing
+ftfy
+regex
+
+# Audio Processing
+librosa
+
+# Configuration
+omegaconf
+easydict
+
+# Utilities
+tqdm
+dashscope
+requests
+packaging
+
+# RunPod SDK
+runpod
+

@@ -8,41 +8,68 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     libgl1-mesa-glx \
     libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /workspace/GenVidIM
 
-# Copy entire GenVidIM repository
+# Copy repository
 COPY . /workspace/GenVidIM/
 
-# Create requirements without flash_attn (it's optional and causes build failures)
-RUN grep -v "flash_attn" requirements.txt > requirements_minimal.txt || true
-
-# Install Python dependencies (without flash_attn)
-RUN pip install --no-cache-dir -r requirements_minimal.txt || \
+# Install Python dependencies in stages for better error handling
+# Stage 1: Core dependencies
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir \
-    torch>=2.4.0 \
-    torchvision>=0.19.0 \
-    torchaudio \
-    opencv-python>=4.9.0.80 \
-    diffusers>=0.31.0 \
-    transformers>=4.49.0 \
-    tokenizers>=0.20.3 \
-    accelerate>=1.1.1 \
-    tqdm \
-    imageio[ffmpeg] \
-    easydict \
-    ftfy \
-    dashscope \
-    imageio-ffmpeg \
-    "numpy>=1.23.5,<2"
+    numpy==1.26.4 \
+    Pillow \
+    packaging \
+    requests
 
-# Install RunPod SDK
+# Stage 2: PyTorch ecosystem (already in base image, but ensure versions)
+RUN pip install --no-cache-dir \
+    einops \
+    safetensors
+
+# Stage 3: HuggingFace and Diffusers
+RUN pip install --no-cache-dir \
+    transformers==4.51.3 \
+    tokenizers \
+    diffusers==0.31.0 \
+    accelerate
+
+# Stage 4: Image/Video processing
+RUN pip install --no-cache-dir \
+    opencv-python-headless \
+    imageio \
+    imageio-ffmpeg \
+    decord \
+    av
+
+# Stage 5: Audio processing
+RUN pip install --no-cache-dir \
+    librosa
+
+# Stage 6: Other dependencies
+RUN pip install --no-cache-dir \
+    ftfy \
+    regex \
+    omegaconf \
+    easydict \
+    tqdm \
+    dashscope
+
+# Stage 7: RunPod SDK
 RUN pip install --no-cache-dir runpod
 
 # Create output directory
 RUN mkdir -p /workspace/GenVidIM/outputs
+
+# Verify critical imports work
+RUN python -c "import torch; import einops; import transformers; import diffusers; print('All imports successful')"
 
 # Start the handler
 CMD ["python", "-u", "serverless/handler.py"]
