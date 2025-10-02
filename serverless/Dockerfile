@@ -21,15 +21,16 @@ WORKDIR /workspace/GenVidIM
 COPY . /workspace/GenVidIM/
 
 # Install Python dependencies in stages for better error handling
-# Stage 1: Core dependencies
+
+# Stage 1: Core dependencies with NumPy version control (CRITICAL)
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir \
-    numpy==1.26.4 \
+    "numpy<2,>=1.23.5" \
     Pillow \
     packaging \
     requests
 
-# Stage 2: PyTorch ecosystem (already in base image, but ensure versions)
+# Stage 2: PyTorch ecosystem (ensure no numpy upgrade)
 RUN pip install --no-cache-dir \
     einops \
     safetensors
@@ -39,7 +40,8 @@ RUN pip install --no-cache-dir \
     transformers==4.51.3 \
     tokenizers \
     diffusers==0.31.0 \
-    accelerate
+    accelerate \
+    sentencepiece
 
 # Stage 4: Image/Video processing
 RUN pip install --no-cache-dir \
@@ -62,14 +64,38 @@ RUN pip install --no-cache-dir \
     tqdm \
     dashscope
 
-# Stage 7: RunPod SDK
+# Stage 7: PEFT and optional acceleration (CRITICAL - was missing!)
+RUN pip install --no-cache-dir \
+    peft \
+    onnxruntime \
+    pandas
+
+# Stage 8: RunPod SDK
 RUN pip install --no-cache-dir runpod
 
 # Create output directory
 RUN mkdir -p /workspace/GenVidIM/outputs
 
 # Verify critical imports work
-RUN python -c "import torch; import einops; import transformers; import diffusers; print('All imports successful')"
+RUN python -c "\
+import sys; \
+import torch; \
+import numpy; \
+print(f'NumPy version: {numpy.__version__}'); \
+assert numpy.__version__ < '2', f'ERROR: NumPy {numpy.__version__} >= 2.0'; \
+import einops; \
+import transformers; \
+import diffusers; \
+import peft; \
+import decord; \
+import librosa; \
+import sentencepiece; \
+print('✅ All critical imports successful'); \
+print(f'Python: {sys.version}'); \
+print(f'PyTorch: {torch.__version__}'); \
+print(f'CUDA Available: {torch.cuda.is_available()}'); \
+"
 
 # Start the handler
 CMD ["python", "-u", "serverless/handler.py"]
+
