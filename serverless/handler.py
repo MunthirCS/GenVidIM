@@ -38,13 +38,14 @@ def generate_video(job):
     print(f"🎬 Starting generation: {prompt}")
 
     # Build command
+    # Network volume is mounted at /runpod-volume
     cmd = [
         'python', 'generate.py',
         '--task', task,
         '--size', size,
         '--sample_steps', str(steps),
         '--prompt', prompt,
-        '--ckpt_dir', '/workspace/models',  # Model checkpoint directory
+        '--ckpt_dir', '/runpod-volume',  # Network volume with model weights
         '--offload_model', 'True',
         '--convert_model_dtype',
         '--t5_cpu'
