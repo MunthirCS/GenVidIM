@@ -39,13 +39,16 @@ def generate_video(job):
 
     # Build command
     # Network volume is mounted at /runpod-volume
+    # Model should be downloaded there using: bash serverless/download_models.sh
+    ckpt_dir = f'/runpod-volume/Wan2.2-TI2V-5B' if task == 'ti2v-5B' else '/runpod-volume'
+    
     cmd = [
         'python', 'generate.py',
         '--task', task,
         '--size', size,
         '--sample_steps', str(steps),
         '--prompt', prompt,
-        '--ckpt_dir', '/runpod-volume',  # Network volume with model weights
+        '--ckpt_dir', ckpt_dir,  # Network volume with model weights
         '--offload_model', 'True',
         '--convert_model_dtype',
         '--t5_cpu'
