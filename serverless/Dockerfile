@@ -1,7 +1,8 @@
-FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
+FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.0-devel-ubuntu22.04
 
-# GenVidIM Serverless - Build date: 2025-10-02
+# GenVidIM Serverless - Build date: 2025-10-03
 # Fixed dependencies: peft, decord, sentencepiece, numpy<2
+# Updated: CUDA 12.4 for better GPU compatibility
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
