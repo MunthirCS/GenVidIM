@@ -1,10 +1,9 @@
 FROM nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04
 
-# GenVidIM Serverless - Build date: 2025-10-03
-# Fixed dependencies: peft, decord, sentencepiece, numpy<2
-# Models included in image
+# GenVidIM Serverless - CUDA 12.1 compatible build
+# All dependencies + models included
 
-# Install system dependencies including Python
+# Install system dependencies and Python 3.10
 RUN apt-get update && apt-get install -y \
     python3.10 \
     python3-pip \
@@ -20,7 +19,8 @@ RUN apt-get update && apt-get install -y \
     libxrender-dev \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -s /usr/bin/python3.10 /usr/bin/python
+    && ln -s /usr/bin/python3.10 /usr/bin/python \
+    && python3.10 -m pip install --upgrade pip setuptools wheel
 
 # Set working directory
 WORKDIR /workspace/GenVidIM
@@ -28,38 +28,33 @@ WORKDIR /workspace/GenVidIM
 # Copy repository
 COPY . /workspace/GenVidIM/
 
-# Install Python dependencies in stages for better error handling
-
-# Stage 1: Core dependencies with NumPy version control (CRITICAL)
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir \
+# Stage 1: Core dependencies with NumPy version control
+RUN pip3 install --no-cache-dir \
     "numpy<2,>=1.23.5" \
     Pillow \
     packaging \
     requests
 
 # Stage 2: Install PyTorch with CUDA 12.1 support
-RUN pip install --no-cache-dir \
-    torch==2.1.0 \
-    torchvision==0.16.0 \
-    torchaudio==2.1.0 \
+RUN pip3 install --no-cache-dir \
+    torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 \
     --index-url https://download.pytorch.org/whl/cu121
 
-# Stage 2b: PyTorch ecosystem (ensure no numpy upgrade)
-RUN pip install --no-cache-dir \
+# Stage 3: PyTorch ecosystem
+RUN pip3 install --no-cache-dir \
     einops \
     safetensors
 
-# Stage 3: HuggingFace and Diffusers
-RUN pip install --no-cache-dir \
+# Stage 4: HuggingFace and Diffusers
+RUN pip3 install --no-cache-dir \
     transformers==4.51.3 \
     tokenizers \
     diffusers==0.31.0 \
     accelerate \
     sentencepiece
 
-# Stage 4: Image/Video processing
-RUN pip install --no-cache-dir \
+# Stage 5: Image/Video processing
+RUN pip3 install --no-cache-dir \
     opencv-python-headless \
     imageio \
     imageio-ffmpeg \
@@ -67,14 +62,13 @@ RUN pip install --no-cache-dir \
     av
 
 # Fix NumPy version after decord (decord upgrades it to 2.x)
-RUN pip install --no-cache-dir --force-reinstall "numpy<2,>=1.23.5"
+RUN pip3 install --no-cache-dir --force-reinstall "numpy<2,>=1.23.5"
 
-# Stage 5: Audio processing
-RUN pip install --no-cache-dir \
-    librosa
+# Stage 6: Audio processing
+RUN pip3 install --no-cache-dir librosa
 
-# Stage 6: Other dependencies
-RUN pip install --no-cache-dir \
+# Stage 7: Other dependencies
+RUN pip3 install --no-cache-dir \
     ftfy \
     regex \
     omegaconf \
@@ -82,17 +76,17 @@ RUN pip install --no-cache-dir \
     tqdm \
     dashscope
 
-# Stage 7: PEFT and optional acceleration (CRITICAL - was missing!)
-RUN pip install --no-cache-dir \
+# Stage 8: PEFT and optional acceleration
+RUN pip3 install --no-cache-dir \
     peft \
     onnxruntime \
     pandas
 
-# Stage 8: RunPod SDK
-RUN pip install --no-cache-dir runpod
+# Stage 9: RunPod SDK
+RUN pip3 install --no-cache-dir runpod
 
-# Stage 9: Download model weights from HuggingFace
-RUN pip install --no-cache-dir "huggingface_hub[cli]" && \
+# Stage 10: Download model weights from HuggingFace
+RUN pip3 install --no-cache-dir "huggingface_hub[cli]" && \
     mkdir -p /workspace/models && \
     huggingface-cli download Wan-AI/Wan2.2-TI2V-5B \
         --local-dir /workspace/models/Wan2.2-TI2V-5B \
@@ -101,24 +95,20 @@ RUN pip install --no-cache-dir "huggingface_hub[cli]" && \
 # Create output directory
 RUN mkdir -p /workspace/GenVidIM/outputs
 
-# Verify critical imports work
+# Verify critical imports and CUDA
 RUN python -c "\
 import sys; \
 import torch; \
 import numpy; \
-print(f'NumPy version: {numpy.__version__}'); \
-assert numpy.__version__ < '2', f'ERROR: NumPy {numpy.__version__} >= 2.0'; \
-import einops; \
-import transformers; \
-import diffusers; \
-import peft; \
-import decord; \
-import librosa; \
-import sentencepiece; \
-print('✅ All critical imports successful'); \
 print(f'Python: {sys.version}'); \
 print(f'PyTorch: {torch.__version__}'); \
+print(f'NumPy: {numpy.__version__}'); \
 print(f'CUDA Available: {torch.cuda.is_available()}'); \
+print(f'CUDA Version: {torch.version.cuda}'); \
+assert torch.cuda.is_available(), 'ERROR: CUDA not available'; \
+assert numpy.__version__ < '2', f'ERROR: NumPy {numpy.__version__} >= 2.0'; \
+import einops, transformers, diffusers, peft, decord, librosa, sentencepiece; \
+print('All critical imports successful'); \
 "
 
 # Start the handler
