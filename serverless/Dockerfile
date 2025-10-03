@@ -95,7 +95,7 @@ RUN pip3 install --no-cache-dir "huggingface_hub[cli]" && \
 # Create output directory
 RUN mkdir -p /workspace/GenVidIM/outputs
 
-# Verify critical imports and CUDA
+# Verify critical imports (CUDA not available during build, only at runtime)
 RUN python -c "\
 import sys; \
 import torch; \
@@ -103,12 +103,11 @@ import numpy; \
 print(f'Python: {sys.version}'); \
 print(f'PyTorch: {torch.__version__}'); \
 print(f'NumPy: {numpy.__version__}'); \
-print(f'CUDA Available: {torch.cuda.is_available()}'); \
-print(f'CUDA Version: {torch.version.cuda}'); \
-assert torch.cuda.is_available(), 'ERROR: CUDA not available'; \
+print(f'CUDA Version (compiled): {torch.version.cuda}'); \
 assert numpy.__version__ < '2', f'ERROR: NumPy {numpy.__version__} >= 2.0'; \
 import einops, transformers, diffusers, peft, decord, librosa, sentencepiece; \
 print('All critical imports successful'); \
+print('Note: CUDA will be available at runtime, not during build'); \
 "
 
 # Start the handler
