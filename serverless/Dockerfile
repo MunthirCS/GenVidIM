@@ -1,11 +1,14 @@
-FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
+FROM nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04
 
 # GenVidIM Serverless - Build date: 2025-10-03
 # Fixed dependencies: peft, decord, sentencepiece, numpy<2
 # Models included in image
 
-# Install system dependencies
+# Install system dependencies including Python
 RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    python3.10-dev \
     git \
     wget \
     curl \
@@ -16,7 +19,8 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libxrender-dev \
     libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /usr/bin/python3.10 /usr/bin/python
 
 # Set working directory
 WORKDIR /workspace/GenVidIM
@@ -34,7 +38,14 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     packaging \
     requests
 
-# Stage 2: PyTorch ecosystem (ensure no numpy upgrade)
+# Stage 2: Install PyTorch with CUDA 12.1 support
+RUN pip install --no-cache-dir \
+    torch==2.1.0 \
+    torchvision==0.16.0 \
+    torchaudio==2.1.0 \
+    --index-url https://download.pytorch.org/whl/cu121
+
+# Stage 2b: PyTorch ecosystem (ensure no numpy upgrade)
 RUN pip install --no-cache-dir \
     einops \
     safetensors
