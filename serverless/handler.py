@@ -44,6 +44,7 @@ def generate_video(job):
         '--size', size,
         '--sample_steps', str(steps),
         '--prompt', prompt,
+        '--ckpt_dir', '/workspace/models',  # Model checkpoint directory
         '--offload_model', 'True',
         '--convert_model_dtype',
         '--t5_cpu'
