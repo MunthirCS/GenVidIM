@@ -79,6 +79,13 @@ RUN pip install --no-cache-dir \
 # Stage 8: RunPod SDK
 RUN pip install --no-cache-dir runpod
 
+# Stage 9: Download model weights from HuggingFace
+RUN pip install --no-cache-dir "huggingface_hub[cli]" && \
+    mkdir -p /workspace/models && \
+    huggingface-cli download Wan-AI/Wan2.2-TI2V-5B \
+        --local-dir /workspace/models/Wan2.2-TI2V-5B \
+        --quiet
+
 # Create output directory
 RUN mkdir -p /workspace/GenVidIM/outputs
 
