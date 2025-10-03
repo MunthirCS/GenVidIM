@@ -54,6 +54,9 @@ RUN pip install --no-cache-dir \
     decord \
     av
 
+# Fix NumPy version after decord (decord upgrades it to 2.x)
+RUN pip install --no-cache-dir --force-reinstall "numpy<2,>=1.23.5"
+
 # Stage 5: Audio processing
 RUN pip install --no-cache-dir \
     librosa
