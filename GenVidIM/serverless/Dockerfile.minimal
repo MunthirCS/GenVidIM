@@ -1,0 +1,13 @@
+# Minimal test Dockerfile to verify RunPod can build
+FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
+
+WORKDIR /workspace/GenVidIM
+
+# Just install RunPod SDK - nothing else
+RUN pip install --no-cache-dir runpod
+
+# Simple test
+RUN python -c "import torch; print('PyTorch:', torch.__version__); print('CUDA:', torch.cuda.is_available())"
+
+CMD ["echo", "Minimal build successful"]
+

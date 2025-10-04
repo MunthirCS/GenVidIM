@@ -1,0 +1,45 @@
+# RunPod Serverless Configuration
+# This file helps RunPod understand your deployment
+
+name: GenVidIM-Wan22-Optimized
+description: Optimized Wan2.2 Video Generation API with a Gradio interface.
+
+# Docker build and runtime
+build:
+  dockerfile: serverless/Dockerfile
+  context: .
+runtime:
+  python_version: "3.10"
+
+# Expose the Gradio interface
+ports:
+  - port: 7860
+    protocol: HTTP
+    visibility: public
+
+# Optimized resource requirements
+resources:
+  gpu: "NVIDIA A100 80GB"
+  gpu_count: 2
+  gpu_memory: 160GB
+  cpu: 32
+  memory: 256GB
+  disk: 300GB
+
+# Network-mounted volume for persistent model storage
+storage:
+  models:
+    path: /workspace/models
+    type: network
+
+# Advanced scaling configuration
+scaling:
+  min_workers: 0
+  max_workers: 5
+  idle_timeout: 60
+  concurrency_modifier: 0.8
+
+# Environment variables
+env:
+  PYTHONUNBUFFERED: "1"
+  MODEL_BASE_PATH: "/workspace/models"
