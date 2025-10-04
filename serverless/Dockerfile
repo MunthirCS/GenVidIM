@@ -83,8 +83,10 @@ RUN pip3 install --no-cache-dir \
     onnxruntime \
     pandas
 
-# Stage 9: Flash Attention 2 (CRITICAL for performance)
-RUN pip3 install --no-cache-dir flash-attn --no-build-isolation
+# Stage 9: Flash Attention 2 (OPTIONAL - skip if fails)
+# Note: Models work without Flash Attention 2, just slower
+RUN pip3 install --no-cache-dir flash-attn --no-build-isolation || \
+    echo "Flash Attention 2 installation failed, continuing without it (models will work but slower)"
 
 # Stage 10: RunPod SDK
 RUN pip3 install --no-cache-dir runpod
