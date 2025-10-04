@@ -1,0 +1,146 @@
+================================================================================
+SERVERLESS ENDPOINT - MISSING DEPENDENCIES ANALYSIS
+================================================================================
+Date: October 2, 2025
+Endpoint: yn6sjkwfuqqk05 (GenVidIM -fb)
+Status: Workers healthy but jobs failing
+
+================================================================================
+CRITICAL ISSUES (Causing Job Failures)
+================================================================================
+
+1. PEFT Package - MISSING ❌
+   Location: Not in Dockerfile
+   Required by: wan/animate.py, wan/modules/animate/animate_utils.py
+   Error: ModuleNotFoundError: No module named 'peft'
+   Fix: Add "peft" to Dockerfile Stage 7
+
+2. Decord Package - MISSING ❌
+   Location: Not in Dockerfile
+   Required by: wan/speech2video.py, wan/animate.py
+   Purpose: Video reading/processing
+   Fix: Add "decord" to Dockerfile Stage 4
+
+3. NumPy Version Conflict - VERSION MISMATCH ❌
+   Current: NumPy 2.2.6 (incompatible)
+   Required: numpy<2 (specifically 1.23.5 to 1.26.4)
+   Error: "A module that was compiled using NumPy 1.x cannot be run in NumPy 2.2.6"
+   Fix: Pin numpy<2 and ensure torch doesn't upgrade it
+
+================================================================================
+ADDITIONAL PACKAGES (Recommended)
+================================================================================
+
+4. Sentencepiece - RECOMMENDED
+   Purpose: T5 tokenizer support (transformers dependency)
+   Status: May work without, but better to include
+   Fix: Add "sentencepiece" to Stage 3
+
+5. ONNXRuntime - OPTIONAL
+   Purpose: ONNX model acceleration (if used)
+   Status: Listed in requirements_animate.txt
+   Fix: Add "onnxruntime" to Stage 7
+
+6. Pandas - OPTIONAL
+   Purpose: Data processing utilities
+   Status: Listed in requirements_animate.txt
+   Fix: Add "pandas" to Stage 7
+
+================================================================================
+PACKAGES ALREADY PRESENT (Verified ✅)
+================================================================================
+
+✅ torch (base image)
+✅ torchvision (base image)
+✅ einops
+✅ safetensors
+✅ transformers==4.51.3
+✅ tokenizers
+✅ diffusers==0.31.0
+✅ accelerate
+✅ opencv-python-headless
+✅ imageio, imageio-ffmpeg
+✅ av
+✅ librosa (audio processing)
+✅ ftfy, regex
+✅ omegaconf, easydict
+✅ dashscope
+✅ runpod
+
+================================================================================
+DOCKERFILE CHANGES NEEDED
+================================================================================
+
+OLD Stage 4 (Image/Video processing):
+    pip install --no-cache-dir \
+    opencv-python-headless \
+    imageio \
+    imageio-ffmpeg \
+    decord \                    ← MISSING - NOT IN ORIGINAL
+    av
+
+NEW Stage 7 (Add before RunPod SDK):
+    pip install --no-cache-dir \
+    peft \                      ← CRITICAL - ADD THIS
+    sentencepiece \             ← RECOMMENDED - ADD THIS
+    onnxruntime \               ← OPTIONAL - ADD THIS
+    pandas                      ← OPTIONAL - ADD THIS
+
+NumPy Fix (Stage 1):
+    OLD: numpy==1.26.4
+    NEW: "numpy<2,>=1.23.5"     ← More explicit constraint
+
+================================================================================
+FILES PROVIDED
+================================================================================
+
+1. SERVERLESS_DEPENDENCY_ANALYSIS.md
+   → Full detailed analysis with impact assessment
+
+2. GenVidIM/serverless/Dockerfile.fixed
+   → Complete fixed Dockerfile ready to use
+
+3. This file (MISSING_DEPENDENCIES_SUMMARY.txt)
+   → Quick reference guide
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+Option 1: Use the Fixed Dockerfile
+   1. cd GenVidIM/serverless
+   2. cp Dockerfile Dockerfile.backup
+   3. cp Dockerfile.fixed Dockerfile
+   4. Rebuild endpoint in RunPod dashboard
+
+Option 2: Manual Patches to Existing Dockerfile
+   1. Add "decord" to Stage 4 (line ~49)
+   2. Add new Stage 7 with peft, sentencepiece, onnxruntime, pandas
+   3. Update Stage 1 numpy to "numpy<2,>=1.23.5"
+   4. Update verification line to test peft and decord imports
+   5. Rebuild endpoint
+
+Rebuild Process:
+   • Go to: https://runpod.io/console/serverless
+   • Select endpoint: yn6sjkwfuqqk05
+   • Trigger rebuild with updated Dockerfile
+   • Wait ~10-15 minutes for build completion
+   • Test with: python test_endpoint.py
+
+================================================================================
+TESTING AFTER REBUILD
+================================================================================
+
+Quick Test:
+   python test_endpoint.py
+
+Full Test:
+   python serverless_generate.py "a blue butterfly" --size 512*288 --steps 10
+
+Expected Result:
+   ✅ Job completes successfully
+   ✅ Video file generated
+   ✅ No import errors
+
+================================================================================
+

@@ -1,0 +1,11 @@
+=================================================================
+COPY AND PASTE THIS INTO YOUR RUNPOD WEB TERMINAL
+=================================================================
+
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILBuT8ZrNypK2KvqGSokALGMzxRhAUfyMpygERuGySGA runpod-automation" >> ~/.ssh/authorized_keys
+
+=================================================================
+THAT'S IT! Then close the terminal and test locally with:
+python automated_generate.py "test video"
+=================================================================
+
