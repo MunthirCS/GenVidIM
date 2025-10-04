@@ -1,8 +1,7 @@
 FROM nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04
 
-# GenVidIM Serverless - Complete Model Suite Build
-# CUDA 12.1 compatible with all Wan models + Flash Attention 2
-# Build date: 2025-10-04
+# GenVidIM Serverless - CUDA 12.1 compatible build
+# All dependencies + models included
 
 # Install system dependencies and Python 3.10
 RUN apt-get update && apt-get install -y \
@@ -83,41 +82,20 @@ RUN pip3 install --no-cache-dir \
     onnxruntime \
     pandas
 
-# Stage 9: Flash Attention 2 (CRITICAL for performance)
-RUN pip3 install --no-cache-dir flash-attn --no-build-isolation
-
-# Stage 10: RunPod SDK
+# Stage 9: RunPod SDK
 RUN pip3 install --no-cache-dir runpod
 
-# Stage 11: Download COMPLETE model suite from HuggingFace
+# Stage 10: Download model weights from HuggingFace
 RUN pip3 install --no-cache-dir "huggingface_hub[cli]" && \
-    mkdir -p /workspace/models
-
-# Download all Wan model variants
-RUN echo "Downloading Wan2.2-TI2V-5B..." && \
+    mkdir -p /workspace/models && \
     huggingface-cli download Wan-AI/Wan2.2-TI2V-5B \
         --local-dir /workspace/models/Wan2.2-TI2V-5B \
-        --quiet
-
-RUN echo "Downloading Wan2.2-Animate-14B..." && \
-    huggingface-cli download Wan-AI/Wan2.2-Animate-14B \
-        --local-dir /workspace/models/Wan2.2-Animate-14B \
-        --quiet
-
-RUN echo "Downloading Wan2.2-S2V-14B..." && \
-    huggingface-cli download Wan-AI/Wan2.2-S2V-14B \
-        --local-dir /workspace/models/Wan2.2-S2V-14B \
-        --quiet
-
-RUN echo "Downloading Wan2.2-T2V-A14B..." && \
-    huggingface-cli download Wan-AI/Wan2.2-T2V-A14B \
-        --local-dir /workspace/models/Wan2.2-T2V-A14B \
         --quiet
 
 # Create output directory
 RUN mkdir -p /workspace/GenVidIM/outputs
 
-# Verify critical imports and Flash Attention 2
+# Verify critical imports (CUDA not available during build, only at runtime)
 RUN python -c "\
 import sys; \
 import torch; \
@@ -129,12 +107,6 @@ print(f'CUDA Version (compiled): {torch.version.cuda}'); \
 assert numpy.__version__ < '2', f'ERROR: NumPy {numpy.__version__} >= 2.0'; \
 import einops, transformers, diffusers, peft, decord, librosa, sentencepiece; \
 print('All critical imports successful'); \
-try: \
-    import flash_attn; \
-    print(f'Flash Attention 2: {flash_attn.__version__}'); \
-    print('Flash Attention 2 available!'); \
-except ImportError: \
-    print('WARNING: Flash Attention 2 not available'); \
 print('Note: CUDA will be available at runtime, not during build'); \
 "
 

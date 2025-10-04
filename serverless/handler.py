@@ -39,7 +39,15 @@ def generate_video(job):
 
     # Build command
     # Models are baked into Docker image at /workspace/models/
-    ckpt_dir = '/workspace/models/Wan2.2-TI2V-5B'
+    # Map each task to its corresponding model directory
+    model_dirs = {
+        'ti2v-5B': '/workspace/models/Wan2.2-TI2V-5B',
+        'animate-14B': '/workspace/models/Wan2.2-Animate-14B',
+        's2v-14B': '/workspace/models/Wan2.2-S2V-14B',
+        't2v-A14B': '/workspace/models/Wan2.2-T2V-A14B'
+    }
+    
+    ckpt_dir = model_dirs.get(task, '/workspace/models/Wan2.2-TI2V-5B')
     
     cmd = [
         'python', 'generate.py',
