@@ -3,33 +3,32 @@
 Check detailed job error from RunPod
 """
 
-import json
-import urllib.request
-from pathlib import Path
+import runpod
+import os
+import sys
+from dotenv import load_dotenv
 
-env = {}
-with open('.runpod.env', 'r') as f:
-    for line in f:
-        if '=' in line and not line.startswith('#'):
-            key, val = line.strip().split('=', 1)
-            env[key] = val
+load_dotenv(dotenv_path=".runpod.env")
+runpod.api_key = os.getenv("RUNPOD_API_KEY")
 
-ENDPOINT_ID = env['RUNPOD_ENDPOINT_ID']
-API_KEY = env['RUNPOD_API_KEY']
-JOB_ID = "4f2c9f08-8aa8-4c1f-987d-94fd3599ce54-e1"
+endpoint_id = os.getenv("RUNPOD_ENDPOINT_ID")
+endpoint = runpod.Endpoint(endpoint_id)
 
-url = f"https://api.runpod.ai/v2/{ENDPOINT_ID}/status/{JOB_ID}"
+if len(sys.argv) < 2:
+    print("Please provide a job ID as a command-line argument.")
+    exit()
 
-headers = {'Authorization': API_KEY}
-
-req = urllib.request.Request(url, headers=headers, method='GET')
-
-with urllib.request.urlopen(req, timeout=10) as response:
-    result = json.loads(response.read().decode('utf-8'))
+job_id = sys.argv[1]
+job = endpoint.job(job_id)
 
 print("\n" + "="*60)
 print("JOB DETAILS")
 print("="*60)
-print(json.dumps(result, indent=2))
-print("="*60 + "\n")
+print(job)
+
+print("\n" + "="*60)
+print("JOB OUTPUT")
+print("="*60)
+print(job.output())
+
 

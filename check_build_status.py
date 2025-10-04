@@ -3,75 +3,39 @@
 Check serverless endpoint build status
 """
 
-import json
-import urllib.request
-from pathlib import Path
+import runpod
+import os
+from dotenv import load_dotenv
 
-env = {}
-with open('.runpod.env', 'r') as f:
-    for line in f:
-        if '=' in line and not line.startswith('#'):
-            key, val = line.strip().split('=', 1)
-            env[key] = val
+load_dotenv(dotenv_path=".runpod.env")
+api_key = os.getenv("RUNPOD_API_KEY")
+print(f"API Key: {api_key}")
+runpod.api_key = api_key
 
-API_KEY = env['RUNPOD_API_KEY']
-ENDPOINT_ID = env['RUNPOD_ENDPOINT_ID']
+endpoint_id = os.getenv("RUNPOD_ENDPOINT_ID")
+endpoints = runpod.get_endpoints()
 
-url = "https://api.runpod.io/graphql"
+endpoint = None
+for ep in endpoints:
+    if ep['id'] == endpoint_id:
+        endpoint = ep
+        break
 
-query = """
-query {
-  myself {
-    endpoints {
-      id
-      name
-      version
-      workersRunning
-      workersIdle
-      workersMax
-      workersMin
-    }
-  }
-}
-"""
+if not endpoint:
+    print(f"Endpoint with ID {endpoint_id} not found.")
+    exit()
 
-headers = {
-    'Content-Type': 'application/json',
-    'Authorization': API_KEY
-}
+print("\n" + "="*60)
+print("SERVERLESS ENDPOINT STATUS")
+print("="*60)
 
-payload = json.dumps({"query": query})
+print(f"\nEndpoint: {endpoint['name']}")
+print(f"ID: {endpoint['id']}")
+print(f"Version: {endpoint['version']}")
+print(f"Workers Standby: {endpoint['workersStandby']}")
 
-req = urllib.request.Request(url, data=payload.encode('utf-8'), headers=headers, method='POST')
-
-with urllib.request.urlopen(req, timeout=10) as response:
-    result = json.loads(response.read().decode('utf-8'))
-    
-    endpoints = result.get('data', {}).get('myself', {}).get('endpoints', [])
-    
-    print("\n" + "="*60)
-    print("SERVERLESS ENDPOINTS STATUS")
-    print("="*60)
-    
-    for ep in endpoints:
-        if ep['id'] == ENDPOINT_ID:
-            print(f"\nEndpoint: {ep['name']}")
-            print(f"ID: {ep['id']}")
-            print(f"Version: {ep.get('version', 'N/A')}")
-            print(f"Workers Running: {ep.get('workersRunning', 0)}")
-            print(f"Workers Idle: {ep.get('workersIdle', 0)}")
-            print(f"Min/Max Workers: {ep.get('workersMin', 0)}/{ep.get('workersMax', 0)}")
-            
-            if ep.get('workersRunning', 0) == 0 and ep.get('workersIdle', 0) == 0:
-                print("\nSTATUS: No workers available (build may be incomplete)")
-            else:
-                print("\nSTATUS: Workers available")
-    
-    print("\n" + "="*60)
-    print("\nRECOMMENDATION:")
-    print("1. Go to: https://runpod.io/console/serverless")
-    print("2. Check build status on GenVidIM endpoint")
-    print("3. If stuck, cancel and rebuild")
-    print("4. Meanwhile, use RTX 5090 pod via web terminal")
-    print("="*60 + "\n")
+if endpoint['workersStandby'] > 0:
+    print("\nSTATUS: Endpoint is ready.")
+else:
+    print("\nSTATUS: Endpoint is not ready.")
 

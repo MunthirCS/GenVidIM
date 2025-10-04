@@ -3,80 +3,43 @@
 Check error details for the latest failed jobs
 """
 
-import json
 import urllib.request
-import os
+import json
+from dotenv import dotenv_values
 
-def get_job_error_details(job_id):
-    """Get detailed error information for a job"""
-    
-    # Load API key and endpoint ID
-    api_key = None
-    endpoint_id = None
-    
-    try:
-        with open('.runpod.env', 'r') as f:
-            for line in f:
-                if line.startswith('RUNPOD_API_KEY='):
-                    api_key = line.split('=', 1)[1].strip()
-                elif line.startswith('RUNPOD_ENDPOINT_ID='):
-                    endpoint_id = line.split('=', 1)[1].strip()
-    except FileNotFoundError:
-        print("❌ .runpod.env file not found")
-        return
-    
-    if not api_key or not endpoint_id:
-        print("❌ Missing API key or endpoint ID")
-        return
-    
-    url = f"https://api.runpod.ai/v2/{endpoint_id}/status/{job_id}"
-    
-    headers = {
-        'Authorization': f'Bearer {api_key}'
-    }
-    
-    try:
-        req = urllib.request.Request(url, headers=headers)
+env = dotenv_values(".runpod.env")
+API_KEY = env['RUNPOD_API_KEY']
+ENDPOINT_ID = env['RUNPOD_ENDPOINT_ID']
+
+# Get the latest job
+url = f"https://api.runpod.io/v2/{ENDPOINT_ID}/jobs"
+print(f"URL: {url}")
+headers = {
+    'Authorization': f"Bearer {API_KEY}"
+}
+req = urllib.request.Request(url, headers=headers, method='GET')
+with urllib.request.urlopen(req, timeout=10) as response:
+    jobs = json.loads(response.read().decode('utf-8')).get('jobs', [])
+    if not jobs:
+        print("No jobs found.")
+        exit()
+
+latest_job = jobs[0]
+print(f"Latest job: {latest_job['id']} ({latest_job['status']})")
+
+if latest_job['status'] == 'FAILED':
+    # Get the logs for the failed job
+    url = f"https://api.runpod.ai/v2/{ENDPOINT_ID}/status/{latest_job['id']}"
+    print(f"URL: {url}")
+    req = urllib.request.Request(url, headers=headers, method='GET')
+    with urllib.request.urlopen(req, timeout=10) as response:
+        job_details = json.loads(response.read().decode('utf-8'))
+        print("\n" + "="*60)
+        print("JOB DETAILS")
+        print("="*60)
+        print(json.dumps(job_details, indent=2))
         
-        with urllib.request.urlopen(req, timeout=10) as response:
-            result = json.loads(response.read().decode('utf-8'))
-            
-            print(f"\n🔍 JOB ERROR DETAILS: {job_id}")
-            print("=" * 60)
-            print(f"Status: {result.get('status')}")
-            print(f"Error: {result.get('error')}")
-            
-            # Check for execution logs
-            execution_logs = result.get('executionLogs', [])
-            if execution_logs:
-                print(f"\n📝 EXECUTION LOGS:")
-                print("-" * 40)
-                for log in execution_logs:
-                    print(f"  {log}")
-            
-            # Check for stderr/stdout in output
-            output = result.get('output', {})
-            if output:
-                print(f"\n📤 OUTPUT:")
-                print("-" * 40)
-                if 'stderr' in output and output['stderr']:
-                    print(f"STDERR:\n{output['stderr']}")
-                if 'stdout' in output and output['stdout']:
-                    print(f"STDOUT:\n{output['stdout']}")
-                
-    except Exception as e:
-        print(f"❌ Error: {e}")
-
-if __name__ == "__main__":
-    # Check the failed jobs from our corrected test
-    failed_jobs = [
-        "ec6606f6-7a9e-4dde-ab77-79f24b7d1c58-e2",  # animate-14B small
-        "a851eb1f-bbb3-416d-afcf-0f4a363bf14d-e2",  # animate-14B medium  
-        "25f5fbca-ede3-4dd4-bac2-ffd228262aec-e1",  # ti2v-5B portrait
-        "10c75b56-4d64-40d8-8878-0fe934353722-e1",  # s2v-14B
-        "909c3334-997e-405b-94b7-94358bbcc955-e2"   # t2v-A14B
-    ]
-    
-    for job_id in failed_jobs:
-        get_job_error_details(job_id)
-        print("\n" + "="*80 + "\n")
+        print("\n" + "="*60)
+        print("JOB OUTPUT")
+        print("="*60)
+        print(job_details.get('output', 'No output found.'))
