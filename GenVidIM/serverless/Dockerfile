@@ -59,7 +59,7 @@ COPY --from=builder /opt/venv /opt/venv
 WORKDIR /workspace/GenVidIM
 
 # Copy the application code
-COPY . /workspace/GenVidIM/
+COPY GenVidIM/. /workspace/GenVidIM/
 
 # Activate the virtual environment
 ENV PATH="/opt/venv/bin:$PATH"
