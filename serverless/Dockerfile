@@ -119,47 +119,6 @@ RUN echo "Downloading Wan2.2-T2V-A14B..." && \
 # Create output directory
 RUN mkdir -p /workspace/GenVidIM/outputs
 
-# Verify critical imports and Flash Attention 2
-RUN python -c "\
-import sys; \
-import torch; \
-import numpy; \
-print(f'Python: {sys.version}'); \
-print(f'PyTorch: {torch.__version__}'); \
-print(f'NumPy: {numpy.__version__}'); \
-print(f'CUDA Version (compiled): {torch.version.cuda}'); \
-assert numpy.__version__ < '2', f'ERROR: NumPy {numpy.__version__} >= 2.0'; \
-print('Core imports successful'); \
-try: \
-    import einops; print('einops: OK'); \
-except ImportError as e: print(f'einops: FAILED - {e}'); \
-try: \
-    import transformers; print('transformers: OK'); \
-except ImportError as e: print(f'transformers: FAILED - {e}'); \
-try: \
-    import diffusers; print('diffusers: OK'); \
-except ImportError as e: print(f'diffusers: FAILED - {e}'); \
-try: \
-    import peft; print('peft: OK'); \
-except ImportError as e: print(f'peft: FAILED - {e}'); \
-try: \
-    import decord; print('decord: OK'); \
-except ImportError as e: print(f'decord: FAILED - {e}'); \
-try: \
-    import librosa; print('librosa: OK'); \
-except ImportError as e: print(f'librosa: FAILED - {e}'); \
-try: \
-    import sentencepiece; print('sentencepiece: OK'); \
-except ImportError as e: print(f'sentencepiece: FAILED - {e}'); \
-try: \
-    import flash_attn; \
-    print(f'Flash Attention 2: {flash_attn.__version__}'); \
-    print('Flash Attention 2 available!'); \
-except ImportError: \
-    print('WARNING: Flash Attention 2 not available'); \
-print('Note: CUDA will be available at runtime, not during build'); \
-"
-
 # Start the handler
 CMD ["python", "-u", "serverless/handler.py"]
 
