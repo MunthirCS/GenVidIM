@@ -20,7 +20,43 @@ To download the models to the network volume, you'll need to attach it to a pod.
 3.  When you're creating the pod, make sure to attach the network volume that you created in the previous step. The network volume will be mounted at the `/workspace/models` directory.
 4.  Once the pod is running, you can connect to it using SSH.
 
-## 3. Download the Models to the Network Volume
+## 3. Create Virtual Environment and Install Dependencies
+
+This is a **one-time setup**. Once the virtual environment is created and the packages are installed on the volume, you won't need to do this again.
+
+**IMPORTANT:** Use a terminal multiplexer like `screen` for this process, as it can take a long time and you don't want your SSH connection to drop.
+
+First, install `screen` if you haven't already:
+```bash
+apt-get update && apt-get install -y screen
+```
+
+Start a `screen` session:
+```bash
+screen -S- cache /workspace/models/* /workspace/venv/*
+```
+
+Inside the `screen` session, run these commands:
+
+```bash
+# 1. Create a Python virtual environment on the network volume
+python3 -m venv /workspace/venv
+
+# 2. Activate the new virtual environment
+source /workspace/venv/bin/activate
+
+# 3. Install all dependencies into this virtual environment
+# This will take a long time. It is safe to detach from the screen session while it runs.
+pip install --no-cache-dir -r /workspace/GenVidIM/requirements.txt
+pip install --no-cache-dir -r /workspace/GenVidIM/requirements_animate.txt
+pip install --no-cache-dir -r /workspace/GenVidIM/requirements_s2v.txt
+pip install --no-cache-dir torch>=2.4.0 torchvision>=0.19.0 torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip install --no-cache-dir flash-attn --no-build-isolation || echo "Flash Attention 2 failed, continuing..."
+```
+
+After running the `pip install` commands, you can safely detach from the session by pressing **`Ctrl+A`** then **`D`**. You can re-attach later with `screen -r deps`.
+
+## 4. Download the Models to the Network Volume
 
 Once you're connected to the pod, you can download the models to the network volume using the following commands. The `hf-transfer` package is installed to accelerate the download speed.
 
