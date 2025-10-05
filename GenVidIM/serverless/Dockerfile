@@ -76,5 +76,5 @@ RUN mkdir -p /workspace/models /workspace/GenVidIM/outputs
 #     rm -rf /root/.cache/huggingface
 
 # Set the entrypoint
-CMD ["python", "-u", "serverless/app.py"]
+CMD ["python", "-u", "serverless/handler.py"]
 
