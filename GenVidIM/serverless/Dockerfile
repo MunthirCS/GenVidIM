@@ -25,11 +25,10 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Install all Python dependencies in a single layer
-COPY GenVidIM/requirements.txt GenVidIM/requirements_animate.txt GenVidIM/requirements_s2v.txt GenVidIM/requirements_gradio.txt ./
+COPY GenVidIM/requirements.txt GenVidIM/requirements_animate.txt GenVidIM/requirements_s2v.txt ./
 RUN pip install --no-cache-dir -r requirements.txt && \
     pip install --no-cache-dir -r requirements_animate.txt && \
     pip install --no-cache-dir -r requirements_s2v.txt && \
-    pip install --no-cache-dir -r requirements_gradio.txt && \
     pip install --no-cache-dir torch>=2.4.0 torchvision>=0.19.0 torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
     pip install --no-cache-dir flash-attn --no-build-isolation || echo "Flash Attention 2 failed, continuing..."
 
