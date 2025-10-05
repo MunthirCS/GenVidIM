@@ -1,0 +1,21 @@
+# Ignore everything by default
+**
+
+# --- Allowlist ---
+# Now, allow only the essential files for the serverless worker
+
+# Allow the main source directory
+!wan/
+!wan/**/*.py
+
+# Allow the serverless scripts
+!serverless/
+!serverless/handler.py
+!serverless/start.sh
+
+# Allow the generate script and its dependencies
+!generate.py
+!config.py
+
+# Allow pyproject.toml in case it's needed for packaging info
+!pyproject.toml
