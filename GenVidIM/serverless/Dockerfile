@@ -1,7 +1,7 @@
 # --- Minimal Runtime Stage ---
 # This image is very small and builds quickly.
 # It relies on a virtual environment stored on a network volume.
-# Cache-bust version: 2
+# Cache-bust version: 3
 FROM python:3.10-slim
 
 # Set the working directory
