@@ -7,7 +7,7 @@ description: Optimized Wan2.2 Video Generation API with a Gradio interface.
 # Docker build and runtime
 build:
   dockerfile: serverless/Dockerfile
-  context: .
+  context: GenVidIM
 runtime:
   python_version: "3.10"
 
